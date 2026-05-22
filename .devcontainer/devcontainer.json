@@ -1,0 +1,36 @@
+{
+  "name": "PlayBook AI Workspace",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  // Use the backend service container as our main workspace shell
+  "service": "backend",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.extraPaths": [
+          "/workspace"
+        ]
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "mongodb.mongodb-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+  // Automatically forward core ports to the host machine
+  "forwardPorts": [
+    5173,
+    8000,
+    27017
+  ],
+  "postCreateCommand": "echo 'Devcontainer workspace successfully mounted! Run uvicorn inside or start services.'",
+  "shutdownAction": "stopCompose"
+}

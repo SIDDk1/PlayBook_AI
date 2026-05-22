@@ -1,0 +1,90 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: playbook_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - playbook_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: playbook_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount backend source to enable instant hot-reloading on the host
+      - ./backend:/workspace
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - AI_PROVIDER=ollama
+      # Connects to the host's running Ollama instance.
+      # Note: On Windows host, you must run Ollama with the system environment variable OLLAMA_HOST=0.0.0.0 set,
+      # so that it accepts incoming requests from the Docker network.
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=deepseek-r1:1.5b
+      - GROQ_API_KEY=
+      - GROQ_MODEL=deepseek-r1-distill-llama-70b
+      - SEED_DEMO_DATA=true
+      - ENVIRONMENT=development
+      - DEBUG=true
+    extra_hosts:
+      # Standard mapping to access the host machine's ports from inside the container network
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mongodb
+    networks:
+      - playbook_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: playbook_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount frontend source to enable instant hot-reloading (Vite HMR)
+      - ./frontend:/workspace
+      # Prevent Docker from overwriting the container's installed node_modules with the host's
+      - /workspace/node_modules
+    environment:
+      # The user's browser accesses the backend via localhost:8000 on their host machine
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - playbook_network
+
+  # OPTIONAL: Self-contained Ollama container running completely within Docker.
+  # To use this instead of your host system's Ollama:
+  # 1. Uncomment this service
+  # 2. In the 'backend' service above, change OLLAMA_BASE_URL to http://ollama:11434
+  # Note: Running LLMs inside Docker on Windows/Mac runs in CPU mode by default and is much slower
+  # unless you configure the NVIDIA Container Toolkit or Apple Silicon pass-through.
+  #
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: playbook_ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   restart: unless-stopped
+  #   networks:
+  #     - playbook_network
+
+volumes:
+  mongodb_data:
+  # ollama_data:
+
+networks:
+  playbook_network:
+    name: playbook_network
