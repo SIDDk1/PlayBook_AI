@@ -1,2 +1,3 @@
-# PlayBook_AI
+# Sentinel AI Playbook Platform
 
+Welcome to Sentinel AI Playbook Platform.
