@@ -224,7 +224,6 @@ function renderImpactedScope(scope: any) {
           </div>
         </div>
       )}
-      <CollapsibleJsonViewer data={parsed} title="Scope" color="#818cf8" />
     </div>
   )
 }
