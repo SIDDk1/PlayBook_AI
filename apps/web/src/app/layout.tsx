@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import '../styles/globals.css'
+import GlobalNavigationDock from '@/components/GlobalNavigationDock'
 
 export const metadata: Metadata = {
   title: 'Sentinel AI — Playbook Generator Platform',
@@ -21,7 +22,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <GlobalNavigationDock />
+      </body>
     </html>
   )
 }
