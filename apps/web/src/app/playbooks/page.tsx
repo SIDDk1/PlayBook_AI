@@ -15,6 +15,272 @@ const CATEGORY_CONFIG: Record<string, { icon: string; color: string; label: stri
   portfolio_concentration_breach: { icon: '⚠️', color: '#eab308', label: 'Concentration Breach' },
 }
 
+// Reusable Collapsible JSON Viewer for Professional Auditing
+function CollapsibleJsonViewer({ data, title, color = '#64748b' }: { data: any; title: string; color?: string }) {
+  const [open, setOpen] = useState(false)
+  const jsonString = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+
+  return (
+    <div style={{ marginTop: '0.5rem' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: color,
+          fontSize: '10px',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          padding: 0,
+          opacity: 0.7,
+          transition: 'opacity 0.15s'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
+      >
+        <span>{open ? '▼' : '▶'}</span>
+        <span>{open ? `Hide Raw ${title} Code` : `Show Raw ${title} Code`}</span>
+      </button>
+      {open && (
+        <pre style={{
+          marginTop: '0.5rem',
+          margin: '0.5rem 0 0 0',
+          fontSize: '11px',
+          fontFamily: 'JetBrains Mono, monospace',
+          background: 'rgba(0,0,0,0.3)',
+          border: '1px solid rgba(255,255,255,0.05)',
+          padding: '0.75rem',
+          borderRadius: '6px',
+          color: '#cbd5e1',
+          overflow: 'auto',
+          whiteSpace: 'pre-wrap'
+        }}>
+          {jsonString}
+        </pre>
+      )}
+    </div>
+  )
+}
+
+// Gorgeous Visual Renderers instead of code blocks
+function renderGuardrails(guardrails: any) {
+  if (!guardrails) return null
+  let parsed = guardrails
+  if (typeof guardrails === 'string') {
+    try {
+      parsed = JSON.parse(guardrails)
+    } catch {
+      return <pre style={{ fontSize: '11px', color: '#fde68a', margin: 0 }}>{guardrails}</pre>
+    }
+  }
+
+  const maxSingleTrade = parsed.max_single_trade_pct !== undefined ? parsed.max_single_trade_pct : null
+  const restrictedAssets = Array.isArray(parsed.restricted_asset_classes) ? parsed.restricted_asset_classes : []
+  const minCashBuffer = parsed.min_cash_buffer_pct !== undefined ? parsed.min_cash_buffer_pct : null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.3)', border: '1px solid rgba(255, 255, 255, 0.06)', padding: '1rem', borderRadius: '8px' }}>
+      {maxSingleTrade !== null && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '0.25rem' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 500 }}>Max Single Trade Allocation</span>
+            <span style={{ color: '#fbbf24', fontWeight: 700 }}>{(maxSingleTrade * 100).toFixed(0)}%</span>
+          </div>
+          <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
+            <div style={{ width: `${maxSingleTrade * 100}%`, height: '100%', background: 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)', borderRadius: '9999px' }} />
+          </div>
+        </div>
+      )}
+
+      {minCashBuffer !== null && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '0.25rem' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 500 }}>Minimum Required Cash Buffer</span>
+            <span style={{ color: '#38bdf8', fontWeight: 700 }}>{(minCashBuffer * 100).toFixed(0)}%</span>
+          </div>
+          <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
+            <div style={{ width: `${minCashBuffer * 100}%`, height: '100%', background: 'linear-gradient(90deg, #38bdf8 0%, #0284c7 100%)', borderRadius: '9999px' }} />
+          </div>
+        </div>
+      )}
+
+      <div>
+        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Restricted Asset Classes</div>
+        {restrictedAssets.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {restrictedAssets.map((asset: string, idx: number) => (
+              <span key={idx} style={{ fontSize: '10px', fontWeight: 700, color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.25)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                🚫 {asset}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>No restricted asset classes.</div>
+        )}
+      </div>
+      <CollapsibleJsonViewer data={parsed} title="Guardrails" color="#fbbf24" />
+    </div>
+  )
+}
+
+function renderTriggerConditions(triggerConditions: any) {
+  if (!triggerConditions) return null
+  let parsed = triggerConditions
+  if (typeof triggerConditions === 'string') {
+    try {
+      parsed = JSON.parse(triggerConditions)
+    } catch {
+      return <pre style={{ fontSize: '11px', color: '#a5f3fc', margin: 0 }}>{triggerConditions}</pre>
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(15, 23, 42, 0.3)', border: '1px solid rgba(255, 255, 255, 0.06)', padding: '1rem', borderRadius: '8px' }}>
+      {Object.entries(parsed).map(([key, val]: [string, any], idx) => {
+        let label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        let valStr = ''
+        if (typeof val === 'number') {
+          if (key.includes('pct') || key.includes('threshold') && val > -1 && val < 1 && val !== 0) {
+            valStr = `${(val * 100).toFixed(0)}%`
+          } else {
+            valStr = val.toString()
+          }
+        } else if (Array.isArray(val)) {
+          valStr = val.join(', ')
+        } else {
+          valStr = String(val)
+        }
+
+        return (
+          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 500 }}>{label}</span>
+            <span style={{ color: '#22d3ee', fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' }}>{valStr}</span>
+          </div>
+        )
+      })}
+      <CollapsibleJsonViewer data={parsed} title="Trigger" color="#06b6d4" />
+    </div>
+  )
+}
+
+function renderImpactedScope(scope: any) {
+  if (!scope) return null
+  let parsed = scope
+  if (typeof scope === 'string') {
+    try {
+      parsed = JSON.parse(scope)
+    } catch {
+      return <pre style={{ fontSize: '11px', color: '#818cf8', margin: 0 }}>{scope}</pre>
+    }
+  }
+
+  const riskProfiles = Array.isArray(parsed.risk_profiles) ? parsed.risk_profiles : []
+  const segments = Array.isArray(parsed.segments) ? parsed.segments : []
+  const assetClasses = Array.isArray(parsed.asset_classes) ? parsed.asset_classes : []
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(15, 23, 42, 0.3)', border: '1px solid rgba(255, 255, 255, 0.06)', padding: '1rem', borderRadius: '8px', fontSize: '11px' }}>
+      {riskProfiles.length > 0 && (
+        <div>
+          <div style={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Risk Profiles</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+            {riskProfiles.map((p: string, idx: number) => (
+              <span key={idx} style={{ color: '#a78bfa', background: 'rgba(167, 139, 250, 0.1)', border: '1px solid rgba(167, 139, 250, 0.25)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {segments.length > 0 && (
+        <div>
+          <div style={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Client Segments</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+            {segments.map((s: string, idx: number) => (
+              <span key={idx} style={{ color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.25)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {assetClasses.length > 0 && (
+        <div>
+          <div style={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Asset Classes</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+            {assetClasses.map((ac: string, idx: number) => (
+              <span key={idx} style={{ color: '#34d399', background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.25)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
+                {ac}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      <CollapsibleJsonViewer data={parsed} title="Scope" color="#818cf8" />
+    </div>
+  )
+}
+
+function renderActionParams(params: any) {
+  if (!params) return null
+  let parsed = params
+  if (typeof params === 'string') {
+    try {
+      parsed = JSON.parse(params)
+    } catch {
+      return <pre style={{ margin: 0, color: '#94a3b8', fontSize: '10px' }}>{params}</pre>
+    }
+  }
+
+  const { sell, buy, amount_pct } = parsed
+
+  if (sell || buy) {
+    return (
+      <div style={{ background: 'rgba(0,0,0,0.15)', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+          {sell && (
+            <span>
+              Sell <strong style={{ color: '#f43f5e' }}>{sell}</strong>
+            </span>
+          )}
+          {buy && (
+            <span>
+              and Buy <strong style={{ color: '#10b981' }}>{buy}</strong>
+            </span>
+          )}
+          {amount_pct !== undefined && (
+            <span style={{ color: '#64748b' }}>
+              (Allocation: <strong style={{ color: '#fbbf24' }}>{(amount_pct * 100).toFixed(0)}%</strong>)
+            </span>
+          )}
+        </div>
+        <CollapsibleJsonViewer data={parsed} title="Parameters" color="#94a3b8" />
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: 'rgba(0,0,0,0.15)', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '11px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+        {Object.entries(parsed).map(([key, val]: [string, any], idx) => (
+          <span key={idx} style={{ borderRight: '1px solid rgba(255,255,255,0.08)', paddingRight: '0.5rem', marginRight: '0.25rem' }}>
+            <strong>{key.replace(/_/g, ' ')}:</strong> {typeof val === 'number' && val > -1 && val < 1 && val !== 0 ? `${(val * 100).toFixed(0)}%` : String(val)}
+          </span>
+        ))}
+      </div>
+      <CollapsibleJsonViewer data={parsed} title="Parameters" color="#94a3b8" />
+    </div>
+  )
+}
+
 export default function PlaybooksPage() {
   const [playbooks, setPlaybooks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -523,9 +789,7 @@ export default function PlaybooksPage() {
                         
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
                           <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Trigger Conditions</div>
-                          <pre style={{ margin: 0, fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', color: '#a5f3fc', whiteSpace: 'pre-wrap' }}>
-                            {JSON.stringify(generatedPlaybook.trigger_conditions, null, 2)}
-                          </pre>
+                          {renderTriggerConditions(generatedPlaybook.trigger_conditions)}
                         </div>
                       </div>
                     )}
@@ -560,9 +824,7 @@ export default function PlaybooksPage() {
 
                         <div>
                           <div style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Compliance Guardrails</div>
-                          <pre style={{ fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '6px', color: '#fde68a', margin: 0, overflowX: 'auto' }}>
-                            {JSON.stringify(generatedPlaybook.guardrails, null, 2)}
-                          </pre>
+                          {renderGuardrails(generatedPlaybook.guardrails)}
                         </div>
                       </div>
                     )}
@@ -579,11 +841,7 @@ export default function PlaybooksPage() {
                             fontSize: '11px'
                           }}>
                             <div style={{ fontWeight: 700, color: '#f1f5f9' }}>Step {act.step}: <span style={{ color: '#c084fc' }}>{act.action_type}</span></div>
-                            {act.params && (
-                              <pre style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }}>
-                                {JSON.stringify(act.params, null, 2)}
-                              </pre>
-                            )}
+                            {act.params && renderActionParams(act.params)}
                           </div>
                         ))}
                       </div>
@@ -1054,17 +1312,13 @@ export default function PlaybooksPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         <div>
                           <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Trigger Conditions Rules</div>
-                          <pre style={{ margin: 0, fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.75rem', borderRadius: '6px', color: '#a5f3fc', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-                            {JSON.stringify(selected.trigger_conditions, null, 2)}
-                          </pre>
+                          {renderTriggerConditions(selected.trigger_conditions)}
                         </div>
                         
                         {selected.impacted_portfolios_clients && (
                           <div>
                             <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Impacted Portfolios Target Scope</div>
-                            <pre style={{ margin: 0, fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.75rem', borderRadius: '6px', color: '#818cf8', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-                              {JSON.stringify(selected.impacted_portfolios_clients, null, 2)}
-                            </pre>
+                            {renderImpactedScope(selected.impacted_portfolios_clients)}
                           </div>
                         )}
                       </div>
@@ -1104,9 +1358,7 @@ export default function PlaybooksPage() {
 
                         <div>
                           <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Compliance Guardrails & Limits</div>
-                          <pre style={{ margin: 0, fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.75rem', borderRadius: '6px', color: '#fde68a', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-                            {JSON.stringify(selected.guardrails || {}, null, 2)}
-                          </pre>
+                          {renderGuardrails(selected.guardrails)}
                         </div>
                       </div>
                     )}
@@ -1125,11 +1377,7 @@ export default function PlaybooksPage() {
                             <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: '#ffffff' }}>
                               Step {action.step}: <span style={{ color: cfg.color }}>{action.action_type}</span>
                             </div>
-                            {action.params && (
-                              <pre style={{ margin: 0, color: '#94a3b8', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', background: 'rgba(0,0,0,0.15)', padding: '0.4rem', borderRadius: '4px' }}>
-                                {JSON.stringify(action.params, null, 2)}
-                              </pre>
-                            )}
+                            {action.params && renderActionParams(action.params)}
                           </div>
                         ))}
                       </div>
