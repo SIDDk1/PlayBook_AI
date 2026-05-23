@@ -245,17 +245,7 @@ export default function PlaybooksPage() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    category: 'market_crash',
-    trigger_conditions: '{\n  "type": "market_crash",\n  "index_drop_threshold": -0.10,\n  "vix_threshold": 35\n}',
-    actions: '[\n  {\n    "step": 1,\n    "action_type": "rebalance",\n    "params": {\n      "sell": "Tech Equity",\n      "buy": "US Treasuries",\n      "amount_pct": 0.20\n    }\n  }\n]',
-    compliance_rules: '{\n  "requires_escalation": true,\n  "restricted_asset_classes": ["Cryptocurrency"]\n}',
-    impacted_portfolios_clients: '{\n  "risk_profiles": ["Aggressive", "Moderate"],\n  "segments": ["HNW", "Ultra-HNW"],\n  "asset_classes": ["Equity"]\n}',
-    risk_checks: '[\n  {\n    "check": "equity_exposure_limit",\n    "threshold": 0.60,\n    "action": "flag"\n  }\n]',
-    client_communication_templates: '{\n  "subject": "Portfolio Strategy Alert",\n  "body": "Dear {client_name}, in response to market volatility we have defensive allocations active.",\n  "tone": "Reassuring and professional"\n}',
-    guardrails: '{\n  "max_single_trade_pct": 0.25,\n  "restricted_asset_classes": ["Cryptocurrency"],\n  "min_cash_buffer_pct": 0.05\n}',
-    escalation_rules: '{\n  "severity_threshold": "Critical",\n  "auto_escalate_roles": ["RiskOfficer"]\n}',
-    approval_workflow: '["RelationshipManager", "RiskOfficer"]',
-    post_action_review_metrics: '[\n  {\n    "metric": "portfolio_recovery_rate",\n    "target": 0.85,\n    "window_days": 30\n  }\n]'
+    category: 'market_crash'
   })
   
   const [saving, setSaving] = useState(false)
@@ -341,16 +331,59 @@ export default function PlaybooksPage() {
         name: form.name,
         description: form.description,
         category: form.category,
-        trigger_conditions: JSON.parse(form.trigger_conditions),
-        actions: JSON.parse(form.actions),
-        compliance_rules: JSON.parse(form.compliance_rules),
-        impacted_portfolios_clients: JSON.parse(form.impacted_portfolios_clients),
-        risk_checks: JSON.parse(form.risk_checks),
-        client_communication_templates: JSON.parse(form.client_communication_templates),
-        guardrails: JSON.parse(form.guardrails),
-        escalation_rules: JSON.parse(form.escalation_rules),
-        approval_workflow: JSON.parse(form.approval_workflow),
-        post_action_review_metrics: JSON.parse(form.post_action_review_metrics)
+        trigger_conditions: {
+          type: form.category,
+          index_drop_threshold: -0.10,
+          vix_threshold: 30
+        },
+        actions: [
+          {
+            step: 1,
+            action_type: "rebalance",
+            params: {
+              sell: "Equity",
+              buy: "Fixed Income",
+              amount_pct: 0.10
+            }
+          }
+        ],
+        compliance_rules: {
+          requires_escalation: true,
+          restricted_asset_classes: ["Cryptocurrency"]
+        },
+        impacted_portfolios_clients: {
+          risk_profiles: ["Aggressive", "Moderate"],
+          segments: ["HNW"],
+          asset_classes: ["Equity"]
+        },
+        risk_checks: [
+          {
+            check: "exposure_limit",
+            threshold: 0.60,
+            action: "flag"
+          }
+        ],
+        client_communication_templates: {
+          subject: `${form.name} Advisory Update`,
+          body: `Dear Client, we are adjusting allocations in response to active conditions.`,
+          tone: "Reassuring"
+        },
+        guardrails: {
+          max_single_trade_pct: 0.20,
+          min_cash_buffer_pct: 0.05
+        },
+        escalation_rules: {
+          severity_threshold: "Warning",
+          auto_escalate_roles: ["RiskOfficer"]
+        },
+        approval_workflow: ["RelationshipManager", "RiskOfficer"],
+        post_action_review_metrics: [
+          {
+            metric: "portfolio_stability",
+            target: 0.90,
+            window_days: 30
+          }
+        ]
       }
       await playbookApi.create(payload)
       setMsg({ type: 'success', text: 'Playbook created successfully!' })
@@ -358,17 +391,7 @@ export default function PlaybooksPage() {
       setForm({
         name: '',
         description: '',
-        category: 'market_crash',
-        trigger_conditions: '{}',
-        actions: '[]',
-        compliance_rules: '{}',
-        impacted_portfolios_clients: '{}',
-        risk_checks: '[]',
-        client_communication_templates: '{}',
-        guardrails: '{}',
-        escalation_rules: '{}',
-        approval_workflow: '[]',
-        post_action_review_metrics: '[]'
+        category: 'market_crash'
       })
       await load()
     } catch (e: any) {
@@ -935,51 +958,6 @@ export default function PlaybooksPage() {
               <div style={{ gridColumn: '1/-1' }}>
                 <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Description</label>
                 <input className="input-field" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief summary of the playbook scenario scope..." />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Trigger Conditions (JSON)</label>
-                <textarea className="input-field" rows={5} value={form.trigger_conditions} onChange={e => setForm(f => ({ ...f, trigger_conditions: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Impacted Portfolios & Clients (JSON)</label>
-                <textarea className="input-field" rows={5} value={form.impacted_portfolios_clients} onChange={e => setForm(f => ({ ...f, impacted_portfolios_clients: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Risk Checks (JSON Array)</label>
-                <textarea className="input-field" rows={5} value={form.risk_checks} onChange={e => setForm(f => ({ ...f, risk_checks: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Recommended Advisor Actions (JSON Array)</label>
-                <textarea className="input-field" rows={5} value={form.actions} onChange={e => setForm(f => ({ ...f, actions: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Client Communication Templates (JSON)</label>
-                <textarea className="input-field" rows={5} value={form.client_communication_templates} onChange={e => setForm(f => ({ ...f, client_communication_templates: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Compliance Guardrails (JSON)</label>
-                <textarea className="input-field" rows={5} value={form.guardrails} onChange={e => setForm(f => ({ ...f, guardrails: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Escalation Rules (JSON)</label>
-                <textarea className="input-field" rows={4} value={form.escalation_rules} onChange={e => setForm(f => ({ ...f, escalation_rules: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Approval Workflow (JSON Array)</label>
-                <textarea className="input-field" rows={4} value={form.approval_workflow} onChange={e => setForm(f => ({ ...f, approval_workflow: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Post Action Review Metrics (JSON Array)</label>
-                <textarea className="input-field" rows={4} value={form.post_action_review_metrics} onChange={e => setForm(f => ({ ...f, post_action_review_metrics: e.target.value }))} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', resize: 'vertical' }} />
               </div>
 
               <div style={{ gridColumn: '1/-1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
