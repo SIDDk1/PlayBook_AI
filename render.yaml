@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: sentinel-ai-api
+    env: python
+    region: oregon
+    plan: free
+    rootDir: apps/api
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    startCommand: "cd src && uvicorn server:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PROJECT_NAME
+        value: "Sentinel AI Playbook Platform"
+      - key: API_V1_STR
+        value: "/api/v1"
+      - key: SECRET_KEY
+        value: "super-secret-key-change-in-production-wealth-sentinel-ai-2026"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "11520"
+      - key: DATABASE_URL
+        value: "postgresql://visionarycoders:visionaryCoders%2328%40Zm@115.245.177.14:30543/visionarycoders"
+      - key: OPENAI_API_KEY
+        sync: false
