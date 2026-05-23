@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -179,3 +180,57 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+=======
+# ==============================
+# Sentinel AI - Git Ignore Rules
+# ==============================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+*.whl
+venv/
+.venv/
+env/
+*.pyc
+
+# --- Node.js ---
+node_modules/
+.next/
+dist/
+build/
+.turbo/
+.vercel/
+
+# --- Environment & Secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Database Files ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- IDE & Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- OS Files ---
+*.log
+*.tmp
+*.bak
+
+# --- Package Locks (optional, keep if needed) ---
+# package-lock.json
+# pnpm-lock.yaml
+>>>>>>> Stashed changes
