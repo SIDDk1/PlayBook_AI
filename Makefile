@@ -8,7 +8,7 @@ setup:
 
 start-backend:
 	@echo "Starting FastAPI backend server..."
-	cd apps/api/src && uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+	cd apps/api/src && uvicorn server:app --host 127.0.0.1 --port 8000 --reload
 
 start-frontend:
 	@echo "Starting Next.js frontend client..."

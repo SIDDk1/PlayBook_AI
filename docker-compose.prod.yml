@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: sentinel_db_prod
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sentinel
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sentinel_redis_prod
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata_prod:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: sentinel_api_prod
+    environment:
+      - PROJECT_NAME=Sentinel AI Playbook Platform
+      - API_V1_STR=/api/v1
+      - SECRET_KEY=super-secret-key-change-in-production-wealth-sentinel-ai-2026
+      - ACCESS_TOKEN_EXPIRE_MINUTES=11520
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/sentinel
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: sentinel_web_prod
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - api
+
+volumes:
+  pgdata_prod:
+  redisdata_prod:

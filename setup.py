@@ -227,11 +227,11 @@ def start_interactive_guide():
     print(f"{BOLD}========================================================================{RESET}")
     print(f"\n{BOLD}To launch the platform, start both the backend API and Next.js frontend:{RESET}")
     print(f"\n  {BOLD}1. Start the API Backend:{RESET}")
-    print(f"     Cd apps/api/src")
+    print(f"     cd apps/api/src")
     if platform.system() == "Windows":
-        print(f"     ..\\venv\\Scripts\\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload")
+        print(f"     ..\\venv\\Scripts\\python.exe -m uvicorn server:app --host 127.0.0.1 --port 8000 --reload")
     else:
-        print(f"     ../venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload")
+        print(f"     ../venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8000 --reload")
     print(f"     {BLUE}--> API will be active at http://127.0.0.1:8000/docs (FastAPI Swagger){RESET}")
     
     print(f"\n  {BOLD}2. Start the Frontend Client:{RESET}")
