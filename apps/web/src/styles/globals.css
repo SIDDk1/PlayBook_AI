@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   --bg-primary: #060b14;
@@ -44,6 +44,37 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+.landing-reveal {
+  animation: landing-reveal 700ms ease-out both;
+}
+
+.reveal-delay-100 {
+  animation-delay: 100ms;
+}
+
+.reveal-delay-200 {
+  animation-delay: 200ms;
+}
+
+.reveal-delay-300 {
+  animation-delay: 300ms;
+}
+
+.reveal-delay-500 {
+  animation-delay: 500ms;
+}
+
+@keyframes landing-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Scrollbar */
