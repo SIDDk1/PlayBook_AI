@@ -68,6 +68,7 @@ export default function DashboardPage() {
   const [approvals, setApprovals] = useState<any[]>([])
   const [playbooks, setPlaybooks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAlertModal, setShowAlertModal] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -119,7 +120,21 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {criticalScenarios.length > 0 && (
-              <div className="badge badge-critical" style={{ animation: 'pulse 2s ease-in-out infinite' }}>
+              <div
+                className="badge badge-critical"
+                onClick={() => setShowAlertModal(true)}
+                style={{
+                  animation: 'pulse 2s ease-in-out infinite',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  transition: 'transform 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                title="Click to view critical alerts details"
+              >
                 🔴 {criticalScenarios.length} Critical Alert{criticalScenarios.length > 1 ? 's' : ''}
               </div>
             )}
@@ -308,6 +323,110 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+
+        {/* Gorgeous Critical Alert Modal popover */}
+        {showAlertModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(5, 8, 16, 0.75)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999999,
+          }}>
+            <div style={{
+              width: '90%',
+              maxWidth: '600px',
+              background: 'rgba(15, 23, 42, 0.95)',
+              border: '1px solid #f43f5e',
+              borderTop: '5px solid #f43f5e',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 25px 50px -12px rgba(244,63,94,0.3)',
+            }}>
+              {/* Modal Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '24px' }}>🚨</span>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#f1f5f9', margin: 0 }}>Active Critical Scenarios</h3>
+                    <span style={{ fontSize: '11px', color: '#f43f5e', fontWeight: 600 }}>Action Required by Wealth Officers</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAlertModal(false)}
+                  style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '18px' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scenarios List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem', maxHeight: '300px', overflowY: 'auto' }}>
+                {criticalScenarios.map((s: any) => (
+                  <div key={s.id} style={{
+                    background: 'rgba(244, 63, 94, 0.05)',
+                    border: '1px solid rgba(244, 63, 94, 0.15)',
+                    borderRadius: '12px',
+                    padding: '1rem',
+                    fontSize: '13px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <strong style={{ color: '#f8fafc', fontSize: '14px', textTransform: 'capitalize' }}>
+                        {s.type.replace(/_/g, ' ')}
+                      </strong>
+                      <span style={{ fontSize: '10px', color: '#f43f5e', background: 'rgba(244,63,94,0.1)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>
+                        {s.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <p style={{ color: '#94a3b8', margin: '0 0 0.75rem 0', lineHeight: 1.4 }}>
+                      {s.description || 'Institutional wealth boundary warning: stress conditions detected.'}
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.5rem' }}>
+                      <span>ID: #{s.id}</span>
+                      <span>Triggered: {new Date(s.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Links */}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => { setShowAlertModal(false); window.location.href = '/scenarios'; }}
+                  style={{
+                    padding: '0.6rem 1.25rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '8px',
+                    color: '#cbd5e1',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View Scenarios Panel
+                </button>
+                <button
+                  onClick={() => { setShowAlertModal(false); window.location.href = '/playbooks'; }}
+                  style={{
+                    padding: '0.6rem 1.25rem',
+                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(244,63,94,0.25)'
+                  }}
+                >
+                  Generate Response Playbook
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   )
