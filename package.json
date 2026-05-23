@@ -1,15 +1,12 @@
 {
   "name": "sentinel-ai-playbook-platform",
+  "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
+  "packageManager": "npm@10.9.2",
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build"
-  },
-  "devDependencies": {
-    "turbo": "latest"
+    "build": "turbo run build"
   }
 }
