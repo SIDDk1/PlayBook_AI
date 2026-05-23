@@ -15,58 +15,6 @@ const CATEGORY_CONFIG: Record<string, { icon: string; color: string; label: stri
   portfolio_concentration_breach: { icon: '⚠️', color: '#eab308', label: 'Concentration Breach' },
 }
 
-// Reusable Collapsible JSON Viewer for Professional Auditing
-function CollapsibleJsonViewer({ data, title, color = '#64748b' }: { data: any; title: string; color?: string }) {
-  const [open, setOpen] = useState(false)
-  const jsonString = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
-
-  return (
-    <div style={{ marginTop: '0.5rem' }}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: color,
-          fontSize: '10px',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-          padding: 0,
-          opacity: 0.7,
-          transition: 'opacity 0.15s'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
-      >
-        <span>{open ? '▼' : '▶'}</span>
-        <span>{open ? `Hide Raw ${title} Code` : `Show Raw ${title} Code`}</span>
-      </button>
-      {open && (
-        <pre style={{
-          marginTop: '0.5rem',
-          margin: '0.5rem 0 0 0',
-          fontSize: '11px',
-          fontFamily: 'JetBrains Mono, monospace',
-          background: 'rgba(0,0,0,0.3)',
-          border: '1px solid rgba(255,255,255,0.05)',
-          padding: '0.75rem',
-          borderRadius: '6px',
-          color: '#cbd5e1',
-          overflow: 'auto',
-          whiteSpace: 'pre-wrap'
-        }}>
-          {jsonString}
-        </pre>
-      )}
-    </div>
-  )
-}
 
 // Gorgeous Visual Renderers instead of code blocks
 function renderGuardrails(guardrails: any) {
@@ -124,7 +72,6 @@ function renderGuardrails(guardrails: any) {
           <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>No restricted asset classes.</div>
         )}
       </div>
-      <CollapsibleJsonViewer data={parsed} title="Guardrails" color="#fbbf24" />
     </div>
   )
 }
@@ -164,7 +111,6 @@ function renderTriggerConditions(triggerConditions: any) {
           </div>
         )
       })}
-      <CollapsibleJsonViewer data={parsed} title="Trigger" color="#06b6d4" />
     </div>
   )
 }
@@ -261,7 +207,6 @@ function renderActionParams(params: any) {
             </span>
           )}
         </div>
-        <CollapsibleJsonViewer data={parsed} title="Parameters" color="#94a3b8" />
       </div>
     )
   }
@@ -275,7 +220,6 @@ function renderActionParams(params: any) {
           </span>
         ))}
       </div>
-      <CollapsibleJsonViewer data={parsed} title="Parameters" color="#94a3b8" />
     </div>
   )
 }
