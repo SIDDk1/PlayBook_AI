@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-# PlayBook_AI
-
-=======
 # 🛡️ Sentinel AI — Playbook Platform
 
 [![Hackathon Ready](https://img.shields.io/badge/Hackathon-Submission-brightgreen.svg?style=for-the-badge)](https://github.com/your-repo)
@@ -132,4 +128,3 @@ To verify backend routing, authorization, AI RAG selection, risk calculations, a
 make run-tests
 ```
 *(All 14 integration test stages check RM blocks, Risk Officer creation, and Compliance Head pending clearances with a 100% success rate).*
->>>>>>> Stashed changes

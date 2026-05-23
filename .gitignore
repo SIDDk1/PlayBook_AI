@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -121,8 +120,6 @@ cython_debug/
 # Cursor  
 .cursorignore
 .cursorindexingignore
-<<<<<<< Updated upstream
-=======
 # ==============================
 # Sentinel AI - Git Ignore Rules
 # ==============================
@@ -139,9 +136,11 @@ venv/
 env/
 *.pyc
 
-# --- Node.js ---
+# --- Node.js & Next.js ---
 node_modules/
+**/node_modules/
 .next/
+out/
 dist/
 build/
 .turbo/
@@ -167,30 +166,8 @@ build/
 Thumbs.db
 desktop.ini
 
-# --- OS Files ---
+# --- OS & Temporary Files ---
 *.log
 *.tmp
 *.bak
 
-# --- Package Locks (optional, keep if needed) ---
-# package-lock.json
-# pnpm-lock.yaml
->>>>>>> Stashed changes
-=======
-
-# =========================
-# Node.js & Next.js Rules
-# =========================
-node_modules/
-**/node_modules/
-.next/
-out/
-build/
-dist/
-.vercel/
-.turbo/
-
-# OS specific
-.DS_Store
-Thumbs.db
->>>>>>> Stashed changes
