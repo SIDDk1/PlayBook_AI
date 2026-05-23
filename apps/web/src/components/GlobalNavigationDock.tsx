@@ -2,7 +2,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth'
 import { authApi } from '@/services/api'
-import { ArrowLeft, ArrowRight, Home, LogIn, LayoutDashboard, ChevronUp, UserCheck, Shield, Zap, Lock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Home, LogIn, LayoutDashboard, ChevronUp, UserCheck, Shield, Zap, Lock, Move } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const DEMO_PERSONAS = [
@@ -11,28 +11,89 @@ const DEMO_PERSONAS = [
   { role: 'ComplianceHead', email: 'compliance@sentinel.ai', password: 'Sentinel2026!', label: 'Compliance Head', color: '#8b5cf6', icon: ChevronUp },
 ]
 
+type DockPosition = 'bottom-center' | 'top-center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+
+const DOCK_POSITION_STYLES: Record<DockPosition, React.CSSProperties> = {
+  'bottom-center': {
+    bottom: '1.25rem',
+    top: 'auto',
+    left: '50%',
+    right: 'auto',
+    transform: 'translateX(-50%)',
+  },
+  'top-center': {
+    top: '1.25rem',
+    bottom: 'auto',
+    left: '50%',
+    right: 'auto',
+    transform: 'translateX(-50%)',
+  },
+  'top-left': {
+    top: '1.25rem',
+    bottom: 'auto',
+    left: '1.25rem',
+    right: 'auto',
+    transform: 'none',
+  },
+  'top-right': {
+    top: '1.25rem',
+    bottom: 'auto',
+    right: '1.25rem',
+    left: 'auto',
+    transform: 'none',
+  },
+  'bottom-left': {
+    bottom: '1.25rem',
+    top: 'auto',
+    left: '1.25rem',
+    right: 'auto',
+    transform: 'none',
+  },
+  'bottom-right': {
+    bottom: '1.25rem',
+    top: 'auto',
+    right: '1.25rem',
+    left: 'auto',
+    transform: 'none',
+  },
+}
+
 export default function GlobalNavigationDock() {
   const router = useRouter()
   const pathname = usePathname()
   const { user, login } = useAuthStore()
   const [mounted, setMounted] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showPositionMenu, setShowPositionMenu] = useState(false)
   const [isSwitching, setIsSwitching] = useState(false)
+  const [dockPosition, setDockPosition] = useState<DockPosition>('bottom-center')
 
   // Avoid hydration mismatches
   useEffect(() => {
     setMounted(true)
+    const saved = localStorage.getItem('dockPosition') as DockPosition
+    if (saved && DOCK_POSITION_STYLES[saved]) {
+      setDockPosition(saved)
+    }
   }, [])
 
-  // Close dropdown on click outside
+  // Close dropdowns on click outside
   useEffect(() => {
-    if (!showDropdown) return
-    const handleClick = () => setShowDropdown(false)
+    if (!showDropdown && !showPositionMenu) return
+    const handleClick = () => {
+      setShowDropdown(false)
+      setShowPositionMenu(false)
+    }
     window.addEventListener('click', handleClick)
     return () => window.removeEventListener('click', handleClick)
-  }, [showDropdown])
+  }, [showDropdown, showPositionMenu])
 
   if (!mounted) return null
+
+  const changeDockPosition = (pos: DockPosition) => {
+    setDockPosition(pos)
+    localStorage.setItem('dockPosition', pos)
+  }
 
   // Helper to determine active route class
   const getActiveStyle = (path: string) => {
@@ -97,20 +158,19 @@ export default function GlobalNavigationDock() {
   return (
     <div style={{
       position: 'fixed',
-      bottom: '1.25rem',
-      left: '50%',
-      transform: 'translateX(-50%)',
       zIndex: 999999,
       display: 'flex',
       alignItems: 'center',
       gap: '0.75rem',
       background: 'rgba(11, 19, 36, 0.72)',
       backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
       border: '1px solid rgba(255, 255, 255, 0.08)',
       borderRadius: '20px',
       padding: '0.5rem 1.25rem',
       boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-      transition: 'all 0.3s ease',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      ...DOCK_POSITION_STYLES[dockPosition],
     }}
       className="floating-dock-shadow"
       onClick={(e) => e.stopPropagation()} // Prevent closing dropdown
@@ -285,7 +345,172 @@ export default function GlobalNavigationDock() {
       {/* Vertical Divider */}
       <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.12)' }} />
 
-      {/* 3. Status Badge & Quick Switcher Dropdown */}
+      {/* 3. Dock Position Picker */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => setShowPositionMenu(!showPositionMenu)}
+          title="Reposition Navigation Dock"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: showPositionMenu ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+            border: showPositionMenu ? '1px solid rgba(6, 182, 212, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+            color: showPositionMenu ? '#22d3ee' : '#cbd5e1',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            if (!showPositionMenu) {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+              e.currentTarget.style.color = '#ffffff'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!showPositionMenu) {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+              e.currentTarget.style.color = '#cbd5e1'
+            }
+          }}
+        >
+          <Move size={15} />
+        </button>
+
+        {showPositionMenu && (
+          <div style={{
+            position: 'absolute',
+            bottom: dockPosition.startsWith('top') ? 'auto' : '2.5rem',
+            top: dockPosition.startsWith('top') ? '2.5rem' : 'auto',
+            right: dockPosition === 'top-left' || dockPosition === 'bottom-left' ? 'auto' : 0,
+            left: dockPosition === 'top-left' || dockPosition === 'bottom-left' ? 0 : 'auto',
+            background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '12px',
+            padding: '0.6rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.4rem',
+            minWidth: '160px',
+            boxShadow: '0 -10px 30px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5)',
+            transformOrigin: dockPosition.startsWith('top') ? 'top right' : 'bottom right',
+            animation: 'fadeInUp 0.15s ease-out',
+            zIndex: 9999999,
+          }}>
+            <div style={{ padding: '0.2rem 0.4rem 0.2rem', fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '0.35rem' }}>
+              📍 Dock Position
+            </div>
+            
+            {/* Visual Viewport Positioning Grid */}
+            <div style={{
+              width: '120px',
+              height: '76px',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '8px',
+              background: 'rgba(0,0,0,0.4)',
+              position: 'relative',
+              margin: '0.25rem auto 0.5rem auto',
+            }}>
+              {([
+                { id: 'top-left', t: '6px', l: '6px', r: 'auto', b: 'auto', tr: 'none' },
+                { id: 'top-center', t: '6px', l: '50%', r: 'auto', b: 'auto', tr: 'translateX(-50%)' },
+                { id: 'top-right', t: '6px', r: '6px', l: 'auto', b: 'auto', tr: 'none' },
+                { id: 'bottom-left', b: '6px', l: '6px', r: 'auto', t: 'auto', tr: 'none' },
+                { id: 'bottom-center', b: '6px', l: '50%', r: 'auto', t: 'auto', tr: 'translateX(-50%)' },
+                { id: 'bottom-right', b: '6px', r: '6px', l: 'auto', t: 'auto', tr: 'none' },
+              ] as const).map((pos) => {
+                const isActive = dockPosition === pos.id
+                return (
+                  <button
+                    key={pos.id}
+                    onClick={() => changeDockPosition(pos.id)}
+                    title={pos.id.replace('-', ' ')}
+                    style={{
+                      position: 'absolute',
+                      top: pos.t,
+                      bottom: pos.b,
+                      left: pos.l,
+                      right: pos.r,
+                      transform: pos.tr,
+                      width: '14px',
+                      height: '14px',
+                      borderRadius: '4px',
+                      background: isActive ? '#06b6d4' : 'rgba(255,255,255,0.15)',
+                      border: isActive ? '1px solid #22d3ee' : '1px solid transparent',
+                      cursor: 'pointer',
+                      boxShadow: isActive ? '0 0 8px #06b6d4' : 'none',
+                      transition: 'all 0.15s ease',
+                      padding: 0,
+                      outline: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.15)'
+                    }}
+                  />
+                )
+              })}
+            </div>
+            
+            {/* Direct labels */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.2rem' }}>
+              {([
+                { id: 'bottom-center', label: 'Bottom Center' },
+                { id: 'top-center', label: 'Top Center' },
+                { id: 'top-left', label: 'Top Left' },
+                { id: 'top-right', label: 'Top Right' },
+              ] as const).map((pos) => {
+                const isActive = dockPosition === pos.id
+                return (
+                  <button
+                    key={pos.id}
+                    onClick={() => changeDockPosition(pos.id)}
+                    style={{
+                      padding: '0.35rem 0.5rem',
+                      borderRadius: '6px',
+                      background: isActive ? 'rgba(6, 182, 212, 0.1)' : 'transparent',
+                      border: 'none',
+                      color: isActive ? '#22d3ee' : '#cbd5e1',
+                      fontSize: '10px',
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                        e.currentTarget.style.color = '#ffffff'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = '#cbd5e1'
+                      }
+                    }}
+                  >
+                    {pos.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Vertical Divider */}
+      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.12)' }} />
+
+      {/* 4. Status Badge & Quick Switcher Dropdown */}
       <div style={{ position: 'relative' }}>
         <button
           onClick={() => !isSwitching && setShowDropdown(!showDropdown)}
@@ -346,10 +571,12 @@ export default function GlobalNavigationDock() {
         {showDropdown && (
           <div style={{
             position: 'absolute',
-            bottom: '2.5rem',
+            bottom: dockPosition.startsWith('top') ? 'auto' : '2.5rem',
+            top: dockPosition.startsWith('top') ? '2.5rem' : 'auto',
             right: 0,
             background: 'rgba(15, 23, 42, 0.95)',
             backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
             border: '1px solid rgba(255, 255, 255, 0.08)',
             borderRadius: '12px',
             padding: '0.4rem',
@@ -358,7 +585,7 @@ export default function GlobalNavigationDock() {
             gap: '0.25rem',
             minWidth: '220px',
             boxShadow: '0 -10px 30px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5)',
-            transformOrigin: 'bottom right',
+            transformOrigin: dockPosition.startsWith('top') ? 'top right' : 'bottom right',
             animation: 'fadeInUp 0.15s ease-out',
           }}>
             <div style={{ padding: '0.35rem 0.5rem 0.2rem', fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '0.25rem' }}>
@@ -367,7 +594,6 @@ export default function GlobalNavigationDock() {
             
             {DEMO_PERSONAS.map((persona) => {
               const isSelected = user?.role?.name === persona.role
-              const PersonaIcon = isSelected ? UserCheck : (persona.role === 'RelationshipManager' ? UserCheck : persona.role === 'RiskOfficer' ? Zap : Shield)
               
               return (
                 <button
