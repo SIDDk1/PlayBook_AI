@@ -18,9 +18,11 @@ export default function LoginPage() {
   const [loginError, setLoginError] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
 
-  useEffect(() => {
-    if (user) router.push('/dashboard')
-  }, [user])
+  // Allow explicit returns to the login page for changing roles during demos.
+  // The user is only redirected automatically when they initiate a login action.
+  // useEffect(() => {
+  //   if (user) router.push('/dashboard')
+  // }, [user])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
