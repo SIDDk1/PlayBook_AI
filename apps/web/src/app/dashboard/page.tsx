@@ -226,7 +226,17 @@ export default function DashboardPage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ background: '#111827', border: '1px solid rgba(99,179,237,0.2)', borderRadius: '8px', fontSize: '12px' }}
+                  contentStyle={{
+                    background: 'rgba(15, 23, 42, 0.97)',
+                    border: '1px solid rgba(99,179,237,0.25)',
+                    borderRadius: '10px',
+                    fontSize: '12px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                    padding: '8px 12px',
+                  }}
+                  itemStyle={{ color: '#e2e8f0', fontWeight: 600 }}
+                  labelStyle={{ color: '#94a3b8', marginBottom: '2px' }}
+                  formatter={(value: any, name: any) => [`${value}%`, name]}
                 />
               </PieChart>
             </ResponsiveContainer>
