@@ -1,4 +1,20 @@
+# Docker Ignore Rules
 node_modules/
 __pycache__/
+venv/
+.venv/
 .env
+.env.local
 .git
+.github
+.gitignore
+.gitattributes
+*.db
+*.sqlite
+*.md
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.next/
+.turbo/
