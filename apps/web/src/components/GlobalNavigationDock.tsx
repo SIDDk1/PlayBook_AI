@@ -11,7 +11,7 @@ const DEMO_PERSONAS = [
   { role: 'ComplianceHead', email: 'compliance@sentinel.ai', password: 'Sentinel2026!', label: 'Compliance Head', color: '#8b5cf6', icon: ChevronUp },
 ]
 
-type DockPosition = 'bottom-center' | 'top-center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+type DockPosition = 'top-center' | 'bottom-center' | 'left-center' | 'right-center'
 
 const DOCK_POSITION_STYLES: Record<DockPosition, React.CSSProperties> = {
   'bottom-center': {
@@ -20,6 +20,8 @@ const DOCK_POSITION_STYLES: Record<DockPosition, React.CSSProperties> = {
     left: '50%',
     right: 'auto',
     transform: 'translateX(-50%)',
+    flexDirection: 'row',
+    padding: '0.5rem 1.25rem',
   },
   'top-center': {
     top: '1.25rem',
@@ -27,34 +29,26 @@ const DOCK_POSITION_STYLES: Record<DockPosition, React.CSSProperties> = {
     left: '50%',
     right: 'auto',
     transform: 'translateX(-50%)',
+    flexDirection: 'row',
+    padding: '0.5rem 1.25rem',
   },
-  'top-left': {
-    top: '1.25rem',
+  'left-center': {
+    top: '50%',
     bottom: 'auto',
     left: '1.25rem',
     right: 'auto',
-    transform: 'none',
+    transform: 'translateY(-50%)',
+    flexDirection: 'column',
+    padding: '1.25rem 0.5rem',
   },
-  'top-right': {
-    top: '1.25rem',
+  'right-center': {
+    top: '50%',
     bottom: 'auto',
     right: '1.25rem',
     left: 'auto',
-    transform: 'none',
-  },
-  'bottom-left': {
-    bottom: '1.25rem',
-    top: 'auto',
-    left: '1.25rem',
-    right: 'auto',
-    transform: 'none',
-  },
-  'bottom-right': {
-    bottom: '1.25rem',
-    top: 'auto',
-    right: '1.25rem',
-    left: 'auto',
-    transform: 'none',
+    transform: 'translateY(-50%)',
+    flexDirection: 'column',
+    padding: '1.25rem 0.5rem',
   },
 }
 
@@ -67,6 +61,8 @@ export default function GlobalNavigationDock() {
   const [showPositionMenu, setShowPositionMenu] = useState(false)
   const [isSwitching, setIsSwitching] = useState(false)
   const [dockPosition, setDockPosition] = useState<DockPosition>('bottom-center')
+
+  const isVertical = dockPosition === 'left-center' || dockPosition === 'right-center'
 
   // Avoid hydration mismatches
   useEffect(() => {
@@ -93,6 +89,49 @@ export default function GlobalNavigationDock() {
   const changeDockPosition = (pos: DockPosition) => {
     setDockPosition(pos)
     localStorage.setItem('dockPosition', pos)
+  }
+
+  // Dynamic positioning for picker and persona popovers
+  const getPopoverStyle = (): React.CSSProperties => {
+    if (dockPosition === 'left-center') {
+      return {
+        position: 'absolute',
+        left: '3.5rem',
+        right: 'auto',
+        top: '0',
+        bottom: 'auto',
+        transformOrigin: 'top left',
+      }
+    }
+    if (dockPosition === 'right-center') {
+      return {
+        position: 'absolute',
+        right: '3.5rem',
+        left: 'auto',
+        top: '0',
+        bottom: 'auto',
+        transformOrigin: 'top right',
+      }
+    }
+    if (dockPosition === 'top-center') {
+      return {
+        position: 'absolute',
+        top: '3rem',
+        bottom: 'auto',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        transformOrigin: 'top center',
+      }
+    }
+    // bottom-center
+    return {
+      position: 'absolute',
+      bottom: '3rem',
+      top: 'auto',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      transformOrigin: 'bottom center',
+    }
   }
 
   // Helper to determine active route class
@@ -167,16 +206,15 @@ export default function GlobalNavigationDock() {
       WebkitBackdropFilter: 'blur(24px)',
       border: '1px solid rgba(255, 255, 255, 0.08)',
       borderRadius: '20px',
-      padding: '0.5rem 1.25rem',
       boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
       ...DOCK_POSITION_STYLES[dockPosition],
     }}
       className="floating-dock-shadow"
       onClick={(e) => e.stopPropagation()} // Prevent closing dropdown
     >
       {/* 1. History Controls */}
-      <div style={{ display: 'flex', gap: '0.35rem' }}>
+      <div style={{ display: 'flex', flexDirection: isVertical ? 'column' : 'row', gap: '0.35rem' }}>
         <button
           onClick={() => router.back()}
           title="Navigate Back"
@@ -238,21 +276,29 @@ export default function GlobalNavigationDock() {
         </button>
       </div>
 
-      {/* Vertical Divider */}
-      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.12)' }} />
+      {/* Vertical/Horizontal Divider */}
+      <div style={{
+        width: isVertical ? '24px' : '1px',
+        height: isVertical ? '1px' : '24px',
+        background: 'rgba(255, 255, 255, 0.12)',
+        transition: 'all 0.3s'
+      }} />
 
       {/* 2. Direct Navigation Quick Links */}
-      <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: isVertical ? 'column' : 'row', gap: '0.45rem', alignItems: 'center' }}>
         <button
           onClick={() => router.push('/')}
           title="Go to Landing Page"
           style={{
             display: 'flex',
+            flexDirection: isVertical ? 'column' : 'row',
             alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.35rem 0.75rem',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: isVertical ? '0.5rem 0.25rem' : '0.35rem 0.75rem',
+            width: isVertical ? '48px' : 'auto',
             borderRadius: '10px',
-            fontSize: '11px',
+            fontSize: isVertical ? '9px' : '11px',
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all 0.2s ease',
@@ -280,11 +326,14 @@ export default function GlobalNavigationDock() {
           title="Go to Login Page"
           style={{
             display: 'flex',
+            flexDirection: isVertical ? 'column' : 'row',
             alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.35rem 0.75rem',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: isVertical ? '0.5rem 0.25rem' : '0.35rem 0.75rem',
+            width: isVertical ? '48px' : 'auto',
             borderRadius: '10px',
-            fontSize: '11px',
+            fontSize: isVertical ? '9px' : '11px',
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all 0.2s ease',
@@ -312,11 +361,14 @@ export default function GlobalNavigationDock() {
           title="Go to Main Project Dashboard"
           style={{
             display: 'flex',
+            flexDirection: isVertical ? 'column' : 'row',
             alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.35rem 0.75rem',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: isVertical ? '0.5rem 0.25rem' : '0.35rem 0.75rem',
+            width: isVertical ? '48px' : 'auto',
             borderRadius: '10px',
-            fontSize: '11px',
+            fontSize: isVertical ? '9px' : '11px',
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all 0.2s ease',
@@ -342,8 +394,13 @@ export default function GlobalNavigationDock() {
         </button>
       </div>
 
-      {/* Vertical Divider */}
-      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.12)' }} />
+      {/* Vertical/Horizontal Divider */}
+      <div style={{
+        width: isVertical ? '24px' : '1px',
+        height: isVertical ? '1px' : '24px',
+        background: 'rgba(255, 255, 255, 0.12)',
+        transition: 'all 0.3s'
+      }} />
 
       {/* 3. Dock Position Picker */}
       <div style={{ position: 'relative' }}>
@@ -383,11 +440,6 @@ export default function GlobalNavigationDock() {
 
         {showPositionMenu && (
           <div style={{
-            position: 'absolute',
-            bottom: dockPosition.startsWith('top') ? 'auto' : '2.5rem',
-            top: dockPosition.startsWith('top') ? '2.5rem' : 'auto',
-            right: dockPosition === 'top-left' || dockPosition === 'bottom-left' ? 'auto' : 0,
-            left: dockPosition === 'top-left' || dockPosition === 'bottom-left' ? 0 : 'auto',
             background: 'rgba(15, 23, 42, 0.95)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
@@ -399,15 +451,15 @@ export default function GlobalNavigationDock() {
             gap: '0.4rem',
             minWidth: '160px',
             boxShadow: '0 -10px 30px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5)',
-            transformOrigin: dockPosition.startsWith('top') ? 'top right' : 'bottom right',
             animation: 'fadeInUp 0.15s ease-out',
             zIndex: 9999999,
+            ...getPopoverStyle(),
           }}>
             <div style={{ padding: '0.2rem 0.4rem 0.2rem', fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '0.35rem' }}>
               📍 Dock Position
             </div>
             
-            {/* Visual Viewport Positioning Grid */}
+            {/* Visual Viewport Positioning Grid (Mini Screen representation) */}
             <div style={{
               width: '120px',
               height: '76px',
@@ -418,12 +470,10 @@ export default function GlobalNavigationDock() {
               margin: '0.25rem auto 0.5rem auto',
             }}>
               {([
-                { id: 'top-left', t: '6px', l: '6px', r: 'auto', b: 'auto', tr: 'none' },
                 { id: 'top-center', t: '6px', l: '50%', r: 'auto', b: 'auto', tr: 'translateX(-50%)' },
-                { id: 'top-right', t: '6px', r: '6px', l: 'auto', b: 'auto', tr: 'none' },
-                { id: 'bottom-left', b: '6px', l: '6px', r: 'auto', t: 'auto', tr: 'none' },
                 { id: 'bottom-center', b: '6px', l: '50%', r: 'auto', t: 'auto', tr: 'translateX(-50%)' },
-                { id: 'bottom-right', b: '6px', r: '6px', l: 'auto', t: 'auto', tr: 'none' },
+                { id: 'left-center', t: '50%', l: '6px', r: 'auto', b: 'auto', tr: 'translateY(-50%)' },
+                { id: 'right-center', t: '50%', r: '6px', l: 'auto', b: 'auto', tr: 'translateY(-50%)' },
               ] as const).map((pos) => {
                 const isActive = dockPosition === pos.id
                 return (
@@ -463,10 +513,10 @@ export default function GlobalNavigationDock() {
             {/* Direct labels */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.2rem' }}>
               {([
-                { id: 'bottom-center', label: 'Bottom Center' },
                 { id: 'top-center', label: 'Top Center' },
-                { id: 'top-left', label: 'Top Left' },
-                { id: 'top-right', label: 'Top Right' },
+                { id: 'bottom-center', label: 'Bottom Center' },
+                { id: 'left-center', label: 'Left Center' },
+                { id: 'right-center', label: 'Right Center' },
               ] as const).map((pos) => {
                 const isActive = dockPosition === pos.id
                 return (
@@ -507,8 +557,13 @@ export default function GlobalNavigationDock() {
         )}
       </div>
 
-      {/* Vertical Divider */}
-      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.12)' }} />
+      {/* Vertical/Horizontal Divider */}
+      <div style={{
+        width: isVertical ? '24px' : '1px',
+        height: isVertical ? '1px' : '24px',
+        background: 'rgba(255, 255, 255, 0.12)',
+        transition: 'all 0.3s'
+      }} />
 
       {/* 4. Status Badge & Quick Switcher Dropdown */}
       <div style={{ position: 'relative' }}>
@@ -518,10 +573,13 @@ export default function GlobalNavigationDock() {
           title="Quick Switch Workspace Persona"
           style={{
             display: 'flex',
+            flexDirection: isVertical ? 'column' : 'row',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.4rem',
-            padding: '0.35rem 0.75rem',
+            padding: isVertical ? '0.5rem 0.25rem' : '0.35rem 0.75rem',
             borderRadius: '10px',
+            width: isVertical ? '48px' : 'auto',
             background: 'rgba(0, 0, 0, 0.25)',
             border: '1px solid rgba(255, 255, 255, 0.08)',
             cursor: isSwitching ? 'not-allowed' : 'pointer',
@@ -556,11 +614,12 @@ export default function GlobalNavigationDock() {
             />
           )}
           <span style={{
-            fontSize: '10px',
+            fontSize: isVertical ? '8px' : '10px',
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
             color: getRoleColor(),
+            textAlign: 'center',
           }}>
             {getRoleLabel()}
           </span>
@@ -570,10 +629,6 @@ export default function GlobalNavigationDock() {
         {/* Floating Switcher Popover */}
         {showDropdown && (
           <div style={{
-            position: 'absolute',
-            bottom: dockPosition.startsWith('top') ? 'auto' : '2.5rem',
-            top: dockPosition.startsWith('top') ? '2.5rem' : 'auto',
-            right: 0,
             background: 'rgba(15, 23, 42, 0.95)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
@@ -585,8 +640,7 @@ export default function GlobalNavigationDock() {
             gap: '0.25rem',
             minWidth: '220px',
             boxShadow: '0 -10px 30px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5)',
-            transformOrigin: dockPosition.startsWith('top') ? 'top right' : 'bottom right',
-            animation: 'fadeInUp 0.15s ease-out',
+            ...getPopoverStyle(),
           }}>
             <div style={{ padding: '0.35rem 0.5rem 0.2rem', fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '0.25rem' }}>
               Switch Demo Persona
