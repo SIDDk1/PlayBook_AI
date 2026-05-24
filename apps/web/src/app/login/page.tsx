@@ -15,14 +15,20 @@ export default function LoginPage() {
   const { login, isLoading, error, user } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [roleName, setRoleName] = useState('RelationshipManager')
+  const [successMessage, setSuccessMessage] = useState('')
   const [loginError, setLoginError] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
 
-  // Allow explicit returns to the login page for changing roles during demos.
-  // The user is only redirected automatically when they initiate a login action.
-  // useEffect(() => {
-  //   if (user) router.push('/dashboard')
-  // }, [user])
+  // Clear inputs and state when toggling mode
+  useEffect(() => {
+    setEmail('')
+    setPassword('')
+    setConfirmPassword('')
+    setSuccessMessage('')
+    setLoginError('')
+  }, [isRegistering])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +38,38 @@ export default function LoginPage() {
       router.push('/dashboard')
     } catch (err: any) {
       setLoginError(err.message)
+    }
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginError('')
+    setSuccessMessage('')
+
+    if (password !== confirmPassword) {
+      setLoginError('Passwords do not match')
+      return
+    }
+
+    try {
+      await authApi.signup({
+        email,
+        password,
+        role_name: roleName,
+      })
+      setSuccessMessage('Account created successfully! Auto-signing you in...')
+      setTimeout(async () => {
+        try {
+          await login(email, password)
+          router.push('/dashboard')
+        } catch (err: any) {
+          setLoginError('Registration succeeded, but auto-login failed. Please sign in manually.')
+          setIsRegistering(false)
+        }
+      }, 1500)
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Registration failed. Please try again.'
+      setLoginError(msg)
     }
   }
 
@@ -155,53 +193,62 @@ export default function LoginPage() {
         padding: '3rem 2.5rem',
       }}>
         <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Sign in</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Access your Sentinel AI workspace</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+            {isRegistering ? 'Create Account' : 'Sign in'}
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+            {isRegistering ? 'Register a new institutional wealth management workspace user' : 'Access your Sentinel AI workspace'}
+          </p>
         </div>
 
-        {/* Demo login buttons */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Demo Login</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {DEMO_ACCOUNTS.map((account) => (
-              <button
-                key={account.role}
-                onClick={() => handleDemoLogin(account)}
-                disabled={isLoading}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.625rem 1rem',
-                  background: 'rgba(15,23,42,0.8)',
-                  border: `1px solid rgba(${account.color === '#06b6d4' ? '6,182,212' : account.color === '#f59e0b' ? '245,158,11' : '139,92,246'},0.2)`,
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left',
-                  color: '#e2e8f0',
-                  width: '100%',
-                }}
-              >
-                <span style={{ fontSize: '18px' }}>{account.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '13px', color: account.color }}>{account.role}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{account.email}</div>
-                </div>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>→</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Demo login buttons — only show when logging in */}
+        {!isRegistering && (
+          <>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Demo Login</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.role}
+                    type="button"
+                    onClick={() => handleDemoLogin(account)}
+                    disabled={isLoading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.625rem 1rem',
+                      background: 'rgba(15,23,42,0.8)',
+                      border: `1px solid rgba(${account.color === '#06b6d4' ? '6,182,212' : account.color === '#f59e0b' ? '245,158,11' : '139,92,246'},0.2)`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'left',
+                      color: '#e2e8f0',
+                      width: '100%',
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>{account.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: account.color }}>{account.role}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{account.email}</div>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>→</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>or enter manually</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
-        </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>or enter manually</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+            </div>
+          </>
+        )}
 
-        {/* Manual login form */}
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {/* Manual login/signup form */}
+        <form onSubmit={isRegistering ? handleRegister : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 500 }}>
               Email
@@ -230,6 +277,64 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Confirm Password — only show when registering */}
+          {isRegistering && (
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 500 }}>
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                className="input-field"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          {/* Role Selection — only show when registering */}
+          {isRegistering && (
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 500 }}>
+                Workspace Persona / Role
+              </label>
+              <select
+                value={roleName}
+                onChange={e => setRoleName(e.target.value)}
+                className="input-field"
+                style={{
+                  width: '100%',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid var(--border-color)',
+                  color: '#e2e8f0',
+                  padding: '0.625rem 0.875rem',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="RelationshipManager">Relationship Manager (RM)</option>
+                <option value="RiskOfficer">Risk Officer</option>
+                <option value="ComplianceHead">Compliance Head</option>
+              </select>
+            </div>
+          )}
+
+          {successMessage && (
+            <div style={{
+              padding: '0.625rem 0.875rem',
+              background: 'rgba(6,182,212,0.1)',
+              border: '1px solid rgba(6,182,212,0.3)',
+              borderRadius: '8px',
+              color: 'var(--accent-cyan)',
+              fontSize: '13px',
+            }}>
+              {successMessage}
+            </div>
+          )}
+
           {(loginError || error) && (
             <div style={{
               padding: '0.625rem 0.875rem',
@@ -245,9 +350,54 @@ export default function LoginPage() {
 
           <button type="submit" className="btn-primary" disabled={isLoading} style={{ justifyContent: 'center', padding: '0.75rem' }}>
             {isLoading ? <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} /> : null}
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? (isRegistering ? 'Creating account...' : 'Signing in...') : (isRegistering ? 'Create Account' : 'Sign In')}
           </button>
         </form>
+
+        {/* Toggle sign in / sign up link */}
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            {isRegistering ? (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsRegistering(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--accent-cyan)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: 0,
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Sign in
+                </button>
+              </>
+            ) : (
+              <>
+                New to Sentinel AI?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsRegistering(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--accent-cyan)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: 0,
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Create an account
+                </button>
+              </>
+            )}
+          </span>
+        </div>
 
         <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(6,182,212,0.05)', borderRadius: '8px', border: '1px solid rgba(6,182,212,0.15)' }}>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
