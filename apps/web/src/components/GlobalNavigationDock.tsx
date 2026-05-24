@@ -62,14 +62,24 @@ export default function GlobalNavigationDock() {
   const [isSwitching, setIsSwitching] = useState(false)
   const [dockPosition, setDockPosition] = useState<DockPosition>('bottom-center')
 
+  // Drag-and-drop state
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null)
+  const [dragStartOffset, setDragStartOffset] = useState({ x: 0, y: 0 })
+
   const isVertical = dockPosition === 'left-center' || dockPosition === 'right-center'
 
-  // Avoid hydration mismatches
+  // Avoid hydration mismatches and load settings
   useEffect(() => {
     setMounted(true)
     const saved = localStorage.getItem('dockPosition') as DockPosition
     if (saved && DOCK_POSITION_STYLES[saved]) {
       setDockPosition(saved)
+    }
+    const savedX = localStorage.getItem('dockDragX')
+    const savedY = localStorage.getItem('dockDragY')
+    if (savedX && savedY) {
+      setDragPosition({ x: parseInt(savedX), y: parseInt(savedY) })
     }
   }, [])
 
@@ -84,14 +94,142 @@ export default function GlobalNavigationDock() {
     return () => window.removeEventListener('click', handleClick)
   }, [showDropdown, showPositionMenu])
 
+  // Drag event bindings on window
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      let x = e.clientX - dragStartOffset.x
+      let y = e.clientY - dragStartOffset.y
+
+      // Keep dock within viewport bounds with padding
+      const padding = 10
+      const dockElement = document.querySelector('.floating-dock-shadow')
+      if (dockElement) {
+        const rect = dockElement.getBoundingClientRect()
+        const maxX = window.innerWidth - rect.width - padding
+        const maxY = window.innerHeight - rect.height - padding
+        x = Math.max(padding, Math.min(x, maxX))
+        y = Math.max(padding, Math.min(y, maxY))
+
+        // Snapping / morphing logic:
+        // Transition orientation dynamically based on proximity to viewport edges
+        const distToLeft = x
+        const distToRight = window.innerWidth - (x + rect.width)
+        const distToTop = y
+        const distToBottom = window.innerHeight - (y + rect.height)
+
+        const minHoriz = Math.min(distToLeft, distToRight)
+        const minVert = Math.min(distToTop, distToBottom)
+
+        if (minHoriz < minVert && minHoriz < 140) {
+          // Closer to side borders
+          if (distToLeft < distToRight) {
+            setDockPosition('left-center')
+            localStorage.setItem('dockPosition', 'left-center')
+          } else {
+            setDockPosition('right-center')
+            localStorage.setItem('dockPosition', 'right-center')
+          }
+        } else {
+          // Closer to top or bottom
+          if (distToTop < distToBottom) {
+            setDockPosition('top-center')
+            localStorage.setItem('dockPosition', 'top-center')
+          } else {
+            setDockPosition('bottom-center')
+            localStorage.setItem('dockPosition', 'bottom-center')
+          }
+        }
+      }
+
+      setDragPosition({ x, y })
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0]
+      let x = touch.clientX - dragStartOffset.x
+      let y = touch.clientY - dragStartOffset.y
+
+      const padding = 10
+      const dockElement = document.querySelector('.floating-dock-shadow')
+      if (dockElement) {
+        const rect = dockElement.getBoundingClientRect()
+        const maxX = window.innerWidth - rect.width - padding
+        const maxY = window.innerHeight - rect.height - padding
+        x = Math.max(padding, Math.min(x, maxX))
+        y = Math.max(padding, Math.min(y, maxY))
+      }
+
+      setDragPosition({ x, y })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleMouseUp)
+    }
+  }, [isDragging, dragStartOffset])
+
+  // Save custom coordinates when dragging concludes
+  useEffect(() => {
+    if (!isDragging && dragPosition) {
+      localStorage.setItem('dockDragX', dragPosition.x.toString())
+      localStorage.setItem('dockDragY', dragPosition.y.toString())
+    }
+  }, [isDragging, dragPosition])
+
   if (!mounted) return null
+
+  // Initiate Mouse Drag
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return // Left click only
+    e.preventDefault()
+    const dockElement = e.currentTarget.closest('.floating-dock-shadow')
+    if (dockElement) {
+      const rect = dockElement.getBoundingClientRect()
+      setDragStartOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      })
+      setIsDragging(true)
+    }
+  }
+
+  // Initiate Touch Drag
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    const dockElement = e.currentTarget.closest('.floating-dock-shadow')
+    if (dockElement) {
+      const rect = dockElement.getBoundingClientRect()
+      setDragStartOffset({
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top,
+      })
+      setIsDragging(true)
+    }
+  }
 
   const changeDockPosition = (pos: DockPosition) => {
     setDockPosition(pos)
     localStorage.setItem('dockPosition', pos)
+    // Clear custom coordinates to return to visual preset positions
+    setDragPosition(null)
+    localStorage.removeItem('dockDragX')
+    localStorage.removeItem('dockDragY')
   }
 
-  // Dynamic positioning for picker and persona popovers
+  // Dynamic positioning style for popovers depending on viewport quadrants
   const getPopoverStyle = (): React.CSSProperties => {
     if (dockPosition === 'left-center') {
       return {
@@ -131,6 +269,42 @@ export default function GlobalNavigationDock() {
       left: '50%',
       transform: 'translateX(-50%)',
       transformOrigin: 'bottom center',
+    }
+  }
+
+  // Dynamic style for main navigation container
+  const getContainerStyle = (): React.CSSProperties => {
+    const baseStyle = {
+      position: 'fixed' as const,
+      zIndex: 999999,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      background: 'rgba(11, 19, 36, 0.72)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: '20px',
+      boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+      transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    }
+
+    if (dragPosition) {
+      return {
+        ...baseStyle,
+        left: `${dragPosition.x}px`,
+        top: `${dragPosition.y}px`,
+        bottom: 'auto',
+        right: 'auto',
+        transform: 'none',
+        flexDirection: isVertical ? 'column' : 'row',
+        padding: isVertical ? '1.25rem 0.5rem' : '0.5rem 1.25rem',
+      }
+    }
+
+    return {
+      ...baseStyle,
+      ...DOCK_POSITION_STYLES[dockPosition],
     }
   }
 
@@ -195,21 +369,8 @@ export default function GlobalNavigationDock() {
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      zIndex: 999999,
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.75rem',
-      background: 'rgba(11, 19, 36, 0.72)',
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      borderRadius: '20px',
-      boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-      ...DOCK_POSITION_STYLES[dockPosition],
-    }}
+    <div 
+      style={getContainerStyle()}
       className="floating-dock-shadow"
       onClick={(e) => e.stopPropagation()} // Prevent closing dropdown
     >
@@ -406,7 +567,9 @@ export default function GlobalNavigationDock() {
       <div style={{ position: 'relative' }}>
         <button
           onClick={() => setShowPositionMenu(!showPositionMenu)}
-          title="Reposition Navigation Dock"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          title="Reposition Navigation Dock (Hold & Drag anywhere)"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -417,8 +580,9 @@ export default function GlobalNavigationDock() {
             background: showPositionMenu ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255, 255, 255, 0.04)',
             border: showPositionMenu ? '1px solid rgba(6, 182, 212, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
             color: showPositionMenu ? '#22d3ee' : '#cbd5e1',
-            cursor: 'pointer',
+            cursor: isDragging ? 'grabbing' : 'grab',
             transition: 'all 0.2s ease',
+            touchAction: 'none',
           }}
           onMouseEnter={(e) => {
             if (!showPositionMenu) {
